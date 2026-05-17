@@ -1,0 +1,33 @@
+import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def scan_port(target, port):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+
+        result = s.connect_ex((target, port))
+
+        s.close()
+
+        if result == 0:
+            return port   # return instead of print
+
+    except:
+        return None
+
+
+def scan_ports(target, port_range):
+    print(f"[+] Scanning {target} on ports {port_range}")
+
+    start, end = map(int, port_range.split("-"))
+
+    open_ports = []
+
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        futures = [executor.submit(scan_port, target, port) for port in range(start, end + 1)]
+
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                print(f"[OPEN] Port {result}")
